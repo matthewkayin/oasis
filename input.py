@@ -40,3 +40,6 @@ class Input():
                 pos = pygame.mouse.get_pos()
                 self.mouse_x = pos[0]
                 self.mouse_y = pos[1]
+
+    def clear_input_queue(self):
+        self.input_queue = []

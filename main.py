@@ -2,6 +2,7 @@ import pygame
 import engine
 import input
 import title
+import level
 import os
 
 
@@ -13,12 +14,13 @@ def run():
     ihandler.map_key(pygame.K_a, "PLAYER LEFT")
     ihandler.map_key(pygame.K_s, "PLAYER DOWN")
     ihandler.map_key(pygame.K_d, "PLAYER RIGHT")
-    state_objects = [title.Title()]
+    state_objects = [title.Title(), level.Level()]
     gamestate = 0
     running = True
 
     while running:
         window.tick()
+        ihandler.clear_input_queue()
         ihandler.plug_events()
         gamestate = state_objects[gamestate].input_output(ihandler.queue, ihandler.states, ihandler.mouse_x, ihandler.mouse_y)
         running = (not ihandler.user_exits) and gamestate != -1

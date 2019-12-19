@@ -11,11 +11,12 @@ class Title():
 
     def begin(self):
         self.gamestate = 0
-        self.menu_index = -1
         self.input_queue = []
         self.input_states = {}
         self.mouse_x = 0
         self.mouse_y = 0
+
+        self.menu_index = -1
 
     def input_output(self, input_queue, input_states, mouse_x, mouse_y):
         self.input_queue = input_queue
@@ -27,12 +28,16 @@ class Title():
         return self.gamestate
 
     def update(self, delta):
+        if delta == 0:
+            return
+
         self.menu_index = -1
         for i in range(0, len(self.menu_options)):
             if globals.point_in_rect(self.mouse_x, self.mouse_y, self.menu_rects[i]):
                 self.menu_index = i
 
-        for event in self.input_queue:
+        while len(self.input_queue) != 0:
+            event = self.input_queue.pop()
             if event == ("LEFT CLICK", True):
                 if self.menu_index == 0:
                     self.gamestate = 1
