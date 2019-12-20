@@ -1,5 +1,5 @@
 import globals
-import room
+import map
 
 
 class Level():
@@ -26,15 +26,12 @@ class Level():
         self.player_y = 70
         self.player_dx = 0
         self.player_dy = 0
+        self.player_found_exit = False
 
         self.camera_x = 0
         self.camera_y = 0
 
-        self.room = room.Room("A")
-        self.room.create_exit("TOP")
-        self.room.create_exit("RIGHT")
-        self.room.create_exit("BOT")
-        self.room.create_exit("LEFT")
+        self.map = map.Map()
 
     def get_player_rect(self):
         return (self.player_x, self.player_y, self.PLAYER_WIDTH, self.PLAYER_HEIGHT)
@@ -52,7 +49,7 @@ class Level():
 
     def check_collisions(self, delta):
         player_rect = self.get_player_rect()
-        for collider_rect in self.room.colliders:
+        for collider_rect in self.map.rooms[self.map.current_room].colliders:
             if globals.rects_collide(player_rect, collider_rect):
                 # We have a collision, so let's first revert player to pre-collision coords
                 x_step = self.player_dx * delta
@@ -80,6 +77,17 @@ class Level():
 
                 player_rect = self.get_player_rect()
 
+    def check_exits(self):
+        player_rect = self.get_player_rect()
+        for i in range(0, len(self.map.rooms[self.map.current_room].exit)):
+            exit_rect = self.map.rooms[self.map.current_room].exit[i]
+            if globals.rects_collide(player_rect, exit_rect) and not globals.rects_collide(player_rect, self.map.rooms[self.map.current_room].get_rect()):
+                new_player_coords = self.map.take_exit(i, (self.player_x, self.player_y))
+                self.player_x = new_player_coords[0]
+                self.player_y = new_player_coords[1]
+
+                return
+
     def update_camera(self):
         if self.player_x - self.camera_x > self.CAMERA_RIGHT_THRESHOLD:
             self.camera_x += (self.player_x - self.camera_x) - self.CAMERA_RIGHT_THRESHOLD
@@ -93,13 +101,13 @@ class Level():
 
         if self.camera_x < 0:
             self.camera_x = 0
-        elif self.camera_x > self.room.WIDTH - 1280:
-            self.camera_x = self.room.WIDTH - 1280
+        elif self.camera_x > self.map.rooms[self.map.current_room].WIDTH - 1280:
+            self.camera_x = self.map.rooms[self.map.current_room].WIDTH - 1280
 
         if self.camera_y < 0:
             self.camera_y = 0
-        elif self.camera_y > self.room.HEIGHT - 720:
-            self.camera_y = self.room.HEIGHT - 720
+        elif self.camera_y > self.map.rooms[self.map.current_room].HEIGHT - 720:
+            self.camera_y = self.map.rooms[self.map.current_room].HEIGHT - 720
 
     def update(self, delta):
         if delta == 0 or len(self.input_states) == 0:
@@ -140,9 +148,10 @@ class Level():
         self.player_y += self.player_dy * delta
 
         self.check_collisions(delta)
+        self.check_exits()
         self.update_camera()
 
     def render(self, window):
-        for collider_rect in self.room.colliders:
+        for collider_rect in self.map.rooms[self.map.current_room].colliders:
             window.fill_rect(window.RED, self.offset_with_camera(collider_rect))
         window.fill_rect(window.BLUE, self.offset_with_camera(self.get_player_rect()))
