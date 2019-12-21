@@ -45,7 +45,9 @@ class Level():
 
     def check_collisions(self, delta):
         player_rect = self.player.get_rect()
-        for collider_rect in self.map.rooms[self.map.current_room].colliders:
+        colliders = self.map.rooms[self.map.current_room].colliders[:]
+        colliders += [enemy.get_rect() for enemy in self.map.rooms[self.map.current_room].enemies]
+        for collider_rect in colliders:
             if globals.rects_collide(player_rect, collider_rect):
                 # We have a collision, so let's first revert player to pre-collision coords
                 x_step = self.player.dx * delta
@@ -139,8 +141,10 @@ class Level():
 
     def update_enemies(self, delta):
         for enemy in self.map.rooms[self.map.current_room].enemies:
-            enemy.update_position(delta, self.player.get_center())
-            self.player.health -= enemy.get_damage()
+            enemy.update_position(delta, self.player.get_rect())
+            if enemy.damage > 0:
+                if globals.rects_collide(self.player.get_rect(), enemy.hurtbox):
+                    self.player.health -= enemy.damage
 
     def update(self, delta):
         if delta == 0 or len(self.input_states) == 0:

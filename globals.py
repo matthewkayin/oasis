@@ -10,5 +10,9 @@ def point_distance(a, b):
     return math.sqrt(math.pow(b[0] - a[0], 2) + math.pow(b[1] - a[1], 2))
 
 
+def get_center(rect):
+    return (rect[0] + (rect[2] / 2), rect[1] + (rect[3] / 2))
+
+
 def rects_collide(rect1, rect2):
     return pygame.Rect(rect1).colliderect(pygame.Rect(rect2))

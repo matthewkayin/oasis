@@ -18,8 +18,9 @@ class Enemy():
         self.attacking = False
         self.attack_timer = 0
         self.ATTACK_WINDUP = 20
-        self.damage = 0
         self.POWER = 1
+        self.damage = 0
+        self.hurtbox = None
 
     def get_rect(self):
         return (self.x, self.y, self.WIDTH, self.HEIGHT)
@@ -27,19 +28,26 @@ class Enemy():
     def get_center(self):
         return (self.x + (self.WIDTH / 2), self.y + (self.HEIGHT / 2))
 
-    def get_damage(self):
-        return self.damage
+    def update_position(self, delta, player_rect):
+        if self.damage > 0:
+            self.damage = 0
+            self.hurtbox = None
 
-    def update_position(self, delta, player_pos):
-        self.damage = 0
+        player_pos = globals.get_center(player_rect)
         player_distance = globals.point_distance(player_pos, self.get_center())
-        if not self.attacking and player_distance <= self.ATTACK_RANGE:
+
+        if self.attacking:
+            self.attack_timer -= delta
+            if self.attack_timer <= 0:
+                self.damage = self.POWER
+                self.attacking = False
+        elif player_distance <= self.ATTACK_RANGE:
             self.dx = 0
             self.dy = 0
             self.attacking = True
             self.attack_timer = self.ATTACK_WINDUP
-        elif player_distance > self.ATTACK_RANGE and player_distance <= self.LINE_OF_SIGHT:
-            self.attacking = False
+            self.hurtbox = player_rect
+        elif player_distance <= self.LINE_OF_SIGHT:
             if abs(player_pos[0] - self.get_center()[0]) > (self.ATTACK_RANGE / 2):
                 if player_pos[0] > self.get_center()[0]:
                     self.dx = self.SPEED
@@ -57,8 +65,3 @@ class Enemy():
 
         self.x += self.dx * delta
         self.y += self.dy * delta
-        if self.attacking:
-            self.attack_timer -= delta
-            if self.attack_timer <= 0:
-                self.damage = self.POWER
-                self.attack_timer = self.ATTACK_WINDUP

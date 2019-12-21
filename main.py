@@ -24,6 +24,8 @@ def run():
         ihandler.plug_events()
         gamestate = state_objects[gamestate].input_output(ihandler.queue, ihandler.states, ihandler.mouse_x, ihandler.mouse_y)
         running = (not ihandler.user_exits) and gamestate != -1
+        if not running:
+            break
         update(window.delta, state_objects[gamestate])
         render(window, state_objects[gamestate])
 
