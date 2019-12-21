@@ -1,3 +1,6 @@
+import enemies
+
+
 class Map():
     def __init__(self):
         self.current_room = 0
@@ -39,6 +42,7 @@ class Room():
         self.exit = []
         self.exit_coords = []
         self.exit_orientations = []
+        self.enemies = []
         self.WIDTH = 0
         self.HEIGHT = 0
         self.WALL_SIZE = 40
@@ -103,6 +107,9 @@ class Room():
         self.WIDTH = 1280
         self.HEIGHT = 720
         self.generate_walls()
+        self.enemies.append(enemies.Enemy())
+        self.enemies[0].x = 1000
+        self.enemies[0].y = 200
 
     def generate_b(self):
         self.WIDTH = 1280

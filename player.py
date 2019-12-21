@@ -13,6 +13,9 @@ class Player():
     def get_rect(self):
         return (self.x, self.y, self.WIDTH, self.HEIGHT)
 
+    def get_center(self):
+        return (self.x + (self.WIDTH / 2), self.y + (self.HEIGHT / 2))
+
     def update_position(self, delta):
         self.x += self.dx * delta
         self.y += self.dy * delta

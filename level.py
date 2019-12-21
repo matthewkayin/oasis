@@ -137,6 +137,11 @@ class Level():
                 else:
                     self.player.dx = 0
 
+    def update_enemies(self, delta):
+        for enemy in self.map.rooms[self.map.current_room].enemies:
+            enemy.update_position(delta, self.player.get_center())
+            self.player.health -= enemy.get_damage()
+
     def update(self, delta):
         if delta == 0 or len(self.input_states) == 0:
             return
@@ -145,9 +150,17 @@ class Level():
         self.player.update_position(delta)
         self.check_collisions(delta)
         self.check_exits()
+        self.update_enemies(delta)
         self.update_camera()
 
     def render(self, window):
         for collider_rect in self.map.rooms[self.map.current_room].colliders:
-            window.fill_rect(window.RED, self.offset_with_camera(collider_rect))
+            window.fill_rect(window.GREEN, self.offset_with_camera(collider_rect))
+        for enemy in self.map.rooms[self.map.current_room].enemies:
+            if enemy.attacking:
+                window.fill_rect(window.RED, self.offset_with_camera(enemy.get_rect()))
+            else:
+                window.fill_rect(window.WHITE, self.offset_with_camera(enemy.get_rect()))
         window.fill_rect(window.BLUE, self.offset_with_camera(self.player.get_rect()))
+        for i in range(0, self.player.health):
+            window.fill_rect(window.YELLOW, (10 + (i * 50), 10, 40, 40))
