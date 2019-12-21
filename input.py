@@ -18,6 +18,8 @@ class Input():
         self.map[pygame_key] = input_name
 
     def handle_input(self, pygame_key, new_state):
+        if pygame_key not in list(self.map.keys()):
+            return
         input_name = self.map[pygame_key]
 
         # If this action doesn't change the current state, don't do anything

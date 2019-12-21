@@ -45,9 +45,7 @@ class Level():
 
     def check_collisions(self, delta):
         player_rect = self.player.get_rect()
-        colliders = self.map.rooms[self.map.current_room].colliders[:]
-        colliders += [enemy.get_rect() for enemy in self.map.rooms[self.map.current_room].enemies]
-        for collider_rect in colliders:
+        for collider_rect in self.map.rooms[self.map.current_room].colliders:
             if globals.rects_collide(player_rect, collider_rect):
                 # We have a collision, so let's first revert player to pre-collision coords
                 x_step = self.player.dx * delta
@@ -110,34 +108,35 @@ class Level():
     def handle_input(self):
         while len(self.input_queue) != 0:
             event = self.input_queue.pop()
+
             if event == ("PLAYER UP", True):
-                self.player.dy = -self.PLAYER_SPEED
+                self.player.set_dy(-1)
             elif event == ("PLAYER RIGHT", True):
-                self.player.dx = self.PLAYER_SPEED
+                self.player.set_dx(1)
             elif event == ("PLAYER DOWN", True):
-                self.player.dy = self.PLAYER_SPEED
+                self.player.set_dy(1)
             elif event == ("PLAYER LEFT", True):
-                self.player.dx = -self.PLAYER_SPEED
+                self.player.set_dx(-1)
             elif event == ("PLAYER UP", False):
                 if self.input_states["PLAYER DOWN"]:
-                    self.player.dy = self.PLAYER_SPEED
+                    self.player.set_dy(1)
                 else:
-                    self.player.dy = 0
+                    self.player.set_dy(0)
             elif event == ("PLAYER RIGHT", False):
                 if self.input_states["PLAYER LEFT"]:
-                    self.player.dx = -self.PLAYER_SPEED
+                    self.player.set_dx(-1)
                 else:
-                    self.player.dx = 0
+                    self.player.set_dx(0)
             elif event == ("PLAYER DOWN", False):
                 if self.input_states["PLAYER UP"]:
-                    self.player.dy = -self.PLAYER_SPEED
+                    self.player.set_dy(-1)
                 else:
-                    self.player.dy = 0
+                    self.player.set_dy(0)
             elif event == ("PLAYER LEFT", False):
                 if self.input_states["PLAYER RIGHT"]:
-                    self.player.dx = self.PLAYER_SPEED
+                    self.player.set_dx(1)
                 else:
-                    self.player.dx = 0
+                    self.player.set_dx(0)
 
     def update_enemies(self, delta):
         for enemy in self.map.rooms[self.map.current_room].enemies:
