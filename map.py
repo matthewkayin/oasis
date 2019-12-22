@@ -8,7 +8,7 @@ class Map():
 
         self.rooms.append(Room("A"))
         self.rooms[0].create_exit("TOP", (1, 0))
-        self.rooms.append(Room("B"))
+        self.rooms.append(Room("C"))
         self.rooms[1].create_exit("BOT", (0, 0))
 
     def get_current_room(self):

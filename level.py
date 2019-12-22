@@ -5,15 +5,6 @@ import player
 
 class Level():
     def __init__(self):
-        self.PLAYER_SPEED = 3
-        self.PLAYER_WIDTH = 20
-        self.PLAYER_HEIGHT = 40
-
-        self.CAMERA_RIGHT_THRESHOLD = int(1280 * 0.6)
-        self.CAMERA_LEFT_THRESHOLD = int(1280 * 0.4)
-        self.CAMERA_TOP_THRESHOLD = int(720 * 0.4)
-        self.CAMERA_BOT_THRESHOLD = int(720 * 0.6)
-
         self.begin()
 
     def begin(self):
@@ -27,6 +18,8 @@ class Level():
         self.player.x = 70
         self.player.y = 70
 
+        self.CAMERA_X_OFFSET = (self.player.WIDTH / 2) - (1280 / 2)
+        self.CAMERA_Y_OFFSET = (self.player.HEIGHT / 2) - (720 / 2)
         self.camera_x = 0
         self.camera_y = 0
 
@@ -48,8 +41,8 @@ class Level():
         for collider_rect in self.map.rooms[self.map.current_room].colliders:
             if globals.rects_collide(player_rect, collider_rect):
                 # We have a collision, so let's first revert player to pre-collision coords
-                x_step = self.player.dx * delta
-                y_step = self.player.dy * delta
+                x_step = self.player.vx * delta
+                y_step = self.player.vy * delta
                 self.player.x -= x_step
                 self.player.y -= y_step
 
@@ -85,25 +78,8 @@ class Level():
                 return
 
     def update_camera(self):
-        if self.player.x - self.camera_x > self.CAMERA_RIGHT_THRESHOLD:
-            self.camera_x += (self.player.x - self.camera_x) - self.CAMERA_RIGHT_THRESHOLD
-        elif self.player.x - self.camera_x < self.CAMERA_LEFT_THRESHOLD:
-            self.camera_x -= self.CAMERA_LEFT_THRESHOLD - (self.player.x - self.camera_x)
-
-        if self.player.y - self.camera_y > self.CAMERA_BOT_THRESHOLD:
-            self.camera_y += (self.player.y - self.camera_y) - self.CAMERA_BOT_THRESHOLD
-        elif self.player.y - self.camera_y < self.CAMERA_TOP_THRESHOLD:
-            self.camera_y -= self.CAMERA_TOP_THRESHOLD - (self.player.y - self.camera_y)
-
-        if self.camera_x < 0:
-            self.camera_x = 0
-        elif self.camera_x > self.map.rooms[self.map.current_room].WIDTH - 1280:
-            self.camera_x = self.map.rooms[self.map.current_room].WIDTH - 1280
-
-        if self.camera_y < 0:
-            self.camera_y = 0
-        elif self.camera_y > self.map.rooms[self.map.current_room].HEIGHT - 720:
-            self.camera_y = self.map.rooms[self.map.current_room].HEIGHT - 720
+        self.camera_x = self.player.x + self.CAMERA_X_OFFSET
+        self.camera_y = self.player.y + self.CAMERA_Y_OFFSET
 
     def handle_input(self):
         while len(self.input_queue) != 0:
@@ -137,6 +113,8 @@ class Level():
                     self.player.set_dx(1)
                 else:
                     self.player.set_dx(0)
+            elif event == ("LEFT CLICK", True):
+                self.player.cast_fire((self.mouse_x + self.camera_x, self.mouse_y + self.camera_y))
 
     def update_enemies(self, delta):
         for enemy in self.map.rooms[self.map.current_room].enemies:
@@ -144,6 +122,17 @@ class Level():
             if enemy.damage > 0:
                 if globals.rects_collide(self.player.get_rect(), enemy.hurtbox):
                     self.player.health -= enemy.damage
+            for spell in self.player.active_spells:
+                if spell.get_damage() > 0:
+                    if globals.rects_collide(enemy.get_rect(), spell.get_rect()):
+                        enemy.health -= spell.get_damage()
+
+        remove_list = []
+        for i in range(0, len(self.map.rooms[self.map.current_room].enemies)):
+            if self.map.rooms[self.map.current_room].enemies[i].health <= 0:
+                remove_list.append(i)
+        for index in remove_list:
+            del self.map.rooms[self.map.current_room].enemies[index]
 
     def update(self, delta):
         if delta == 0 or len(self.input_states) == 0:
@@ -165,5 +154,9 @@ class Level():
             else:
                 window.fill_rect(window.WHITE, self.offset_with_camera(enemy.get_rect()))
         window.fill_rect(window.BLUE, self.offset_with_camera(self.player.get_rect()))
+        for spell in self.player.active_spells:
+            window.fill_rect(window.RED, self.offset_with_camera(spell.get_rect()))
+        if self.player.get_charge_percent() > 0:
+            window.fill_rect(window.YELLOW, self.offset_with_camera(self.player.get_charge_bar_rect()))
         for i in range(0, self.player.health):
             window.fill_rect(window.YELLOW, (10 + (i * 50), 10, 40, 40))

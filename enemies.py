@@ -23,6 +23,7 @@ class Enemy():
         self.POWER = 1
         self.damage = 0
         self.hurtbox = None
+        self.health = 1
 
     def get_rect(self):
         return (self.x, self.y, self.WIDTH, self.HEIGHT)
