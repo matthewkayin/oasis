@@ -44,44 +44,35 @@ class Level():
 
     def check_collisions(self, delta):
         player_rect = self.player.get_rect()
-        for collider_rect in self.map.rooms[self.map.current_room].colliders:
-            if globals.rects_collide(player_rect, collider_rect):
-                # We have a collision, so let's first revert player to pre-collision coords
-                x_step = self.player.vx * delta
-                y_step = self.player.vy * delta
-                self.player.x -= x_step
-                self.player.y -= y_step
+        for room in self.map.rooms:
+            for collider_rect in room.colliders:
+                if globals.rect_in_screen(self.offset_with_camera(collider_rect)):
+                    if globals.rects_collide(player_rect, collider_rect):
+                        # We have a collision, so let's first revert player to pre-collision coords
+                        x_step = self.player.vx * delta
+                        y_step = self.player.vy * delta
+                        self.player.x -= x_step
+                        self.player.y -= y_step
 
-                # Now check if collision is caused by x dir or y dir movement
-                self.player.x += x_step
-                player_rect = self.player.get_rect()
-                x_causes_collision = globals.rects_collide(player_rect, collider_rect)
-                self.player.x -= x_step
+                        # Now check if collision is caused by x dir or y dir movement
+                        self.player.x += x_step
+                        player_rect = self.player.get_rect()
+                        x_causes_collision = globals.rects_collide(player_rect, collider_rect)
+                        self.player.x -= x_step
 
-                self.player.y += y_step
-                player_rect = self.player.get_rect()
-                y_causes_collision = globals.rects_collide(player_rect, collider_rect)
-                self.player.y -= y_step
+                        self.player.y += y_step
+                        player_rect = self.player.get_rect()
+                        y_causes_collision = globals.rects_collide(player_rect, collider_rect)
+                        self.player.y -= y_step
 
-                # If x movement doesn't cause collision, go ahead and keep doing x movement
-                if not x_causes_collision:
-                    self.player.x += x_step
-                # Same thing with y direction
-                if not y_causes_collision:
-                    self.player.y += y_step
+                        # If x movement doesn't cause collision, go ahead and keep doing x movement
+                        if not x_causes_collision:
+                            self.player.x += x_step
+                        # Same thing with y direction
+                        if not y_causes_collision:
+                            self.player.y += y_step
 
-                player_rect = self.player.get_rect()
-
-    def check_exits(self):
-        player_rect = self.player.get_rect()
-        for i in range(0, len(self.map.rooms[self.map.current_room].exit)):
-            exit_rect = self.map.rooms[self.map.current_room].exit[i]
-            if globals.rects_collide(player_rect, exit_rect) and not globals.rects_collide(player_rect, self.map.rooms[self.map.current_room].get_rect()):
-                new_player_coords = self.map.take_exit(i, (self.player.x, self.player.y))
-                self.player.x = new_player_coords[0]
-                self.player.y = new_player_coords[1]
-
-                return
+                        player_rect = self.player.get_rect()
 
     def update_camera(self):
         mouse_player_offset = (self.mouse_x - self.SCREEN_CENTER[0], self.mouse_y - self.SCREEN_CENTER[1])
@@ -172,7 +163,6 @@ class Level():
         if self.player.ui_state == 0:
             self.player.update_position(delta)
             self.check_collisions(delta)
-            self.check_exits()
             self.update_enemies(delta)
             self.update_camera()
         elif self.player.ui_state == 1:
@@ -204,8 +194,11 @@ class Level():
             self.spellcircle_items.append(entry)
 
     def render(self, window):
-        for collider_rect in self.map.rooms[self.map.current_room].colliders:
-            window.fill_rect(window.GREEN, self.offset_with_camera(collider_rect))
+        for room in self.map.rooms:
+            for collider in room.colliders:
+                collider_rect = self.offset_with_camera(collider)
+                if globals.rect_in_screen(collider_rect):
+                    window.fill_rect(window.GREEN, collider_rect)
         for enemy in self.map.rooms[self.map.current_room].enemies:
             if enemy.attacking:
                 window.fill_rect(window.RED, self.offset_with_camera(enemy.get_rect()))
