@@ -1,5 +1,6 @@
 import globals
 import spells
+import items
 
 
 class Player():
@@ -17,8 +18,15 @@ class Player():
         self.vy = 0
 
         self.pending_spell = None
+        self.pending_remove_index = 0
         self.charge_timer = 0
         self.active_spells = []
+
+        self.ui_state = 0
+        self.ui_substate = 0
+
+        self.inventory = []
+        self.add_item("spellbook-fire", 3)
 
     def get_rect(self):
         return (self.x, self.y, self.WIDTH, self.HEIGHT)
@@ -46,6 +54,7 @@ class Player():
                 self.charge_timer -= delta
                 if self.charge_timer <= 0:
                     self.active_spells.append(self.pending_spell)
+                    self.inventory[self.pending_remove_index].quantity -= 1
                     self.charge_timer = 0
                     self.pending_spell = None
 
@@ -60,6 +69,35 @@ class Player():
         for index in remove_list:
             del self.active_spells[index]
 
+        remove_list = []
+        for i in range(0, len(self.inventory)):
+            if self.inventory[i].quantity == 0:
+                remove_list.append(i)
+        for index in remove_list:
+            del self.inventory[index]
+
+    def get_castable_spells(self):
+        castables = []
+        for item in self.inventory:
+            if item.type == "spellbook":
+                castables.append((item.shortname[item.shortname.index("-") + 1:], item.quantity))
+
+        return castables
+
+    def get_inventory_position(self, item_shortname):
+        for i in range(0, len(self.inventory)):
+            if self.inventory[i].shortname == item_shortname:
+                return i
+
+        return -1
+
+    def add_item(self, shortname, quantity=1):
+        index = self.get_inventory_position(shortname)
+        if index == -1:
+            self.inventory.append(items.Item(shortname, quantity))
+        else:
+            self.inventory[index].quantity += quantity
+
     def get_charge_percent(self):
         if self.pending_spell is None:
             return 0
@@ -69,8 +107,20 @@ class Player():
     def get_charge_bar_rect(self):
         return (self.x - 5, self.y - 10, 30 * self.get_charge_percent(), 5)
 
-    def cast_fire(self, position):
-        self.pending_spell = spells.Fire(self.get_center(), position)
+    def cast_spell(self, shortname, position):
+        spell = None
+        if shortname == "fire":
+            spell = spells.Fire(self.get_center(), position)
+        else:
+            print("Invalid spell shortname in cast_spell!")
+            return
+        if globals.point_distance(position, self.get_center()) > spell.CAST_RADIUS:
+            return
+
+        self.ui_state = 0
+        self.ui_substate = 0
+        self.pending_remove_index = self.get_inventory_position("spellbook-" + shortname)
+        self.pending_spell = spell
         self.charge_timer = self.pending_spell.CHARGE_TIME
         self.set_dx(0)
         self.set_dy(0)

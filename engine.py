@@ -52,7 +52,7 @@ class Engine():
 
         # Init pygame
         pygame.init()
-        pygame_flags = pygame.HWSURFACE
+        pygame_flags = pygame.HWSURFACE | pygame.DOUBLEBUF
         if self.debug_mode:
             self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame_flags)
         else:
@@ -100,6 +100,14 @@ class Engine():
 
     def fill_rect(self, color, rect):
         pygame.draw.rect(self.screen, color, rect, False)
+
+    def fill_rect_transparent(self, color, alpha, rect):
+        s = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
+        s.fill((color[0], color[1], color[2], alpha))
+        self.screen.blit(s, (rect[0], rect[1]))
+
+    def draw_circle(self, color, center, radius, width):
+        pygame.draw.circle(self.screen, color, center, radius, width)
 
     def render_text(self, text, pos, size=14, color=(255, 255, 255)):
         """

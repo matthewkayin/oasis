@@ -8,12 +8,13 @@ import os
 
 def run():
     window = engine.Engine("Oasis")
-    ihandler = input.Input(["LEFT CLICK", "PLAYER LEFT", "PLAYER RIGHT", "PLAYER UP", "PLAYER DOWN"])
+    ihandler = input.Input(["LEFT CLICK", "PLAYER LEFT", "PLAYER RIGHT", "PLAYER UP", "PLAYER DOWN", "SPELLCAST"])
     ihandler.map_key("M1", "LEFT CLICK")
     ihandler.map_key(pygame.K_w, "PLAYER UP")
     ihandler.map_key(pygame.K_a, "PLAYER LEFT")
     ihandler.map_key(pygame.K_s, "PLAYER DOWN")
     ihandler.map_key(pygame.K_d, "PLAYER RIGHT")
+    ihandler.map_key(pygame.K_SPACE, "SPELLCAST")
     state_objects = [title.Title(), level.Level()]
     gamestate = 0
     running = True

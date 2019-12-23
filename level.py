@@ -1,6 +1,7 @@
 import globals
 import map
 import player
+import math
 
 
 class Level():
@@ -18,8 +19,13 @@ class Level():
         self.player.x = 70
         self.player.y = 70
 
+        self.spellcircle_items = []
+        self.spellcircle_aim_index = -1
+
+        self.SCREEN_CENTER = (int(1280 / 2), int(720 / 2))
         self.CAMERA_X_OFFSET = (self.player.WIDTH / 2) - (1280 / 2)
         self.CAMERA_Y_OFFSET = (self.player.HEIGHT / 2) - (720 / 2)
+        self.CAMERA_SENSITIVITY = 0.4
         self.camera_x = 0
         self.camera_y = 0
 
@@ -78,8 +84,19 @@ class Level():
                 return
 
     def update_camera(self):
-        self.camera_x = self.player.x + self.CAMERA_X_OFFSET
-        self.camera_y = self.player.y + self.CAMERA_Y_OFFSET
+        mouse_player_offset = (self.mouse_x - self.SCREEN_CENTER[0], self.mouse_y - self.SCREEN_CENTER[1])
+        self.camera_x = self.player.x + self.CAMERA_X_OFFSET + (mouse_player_offset[0] * self.CAMERA_SENSITIVITY)
+        self.camera_y = self.player.y + self.CAMERA_Y_OFFSET + (mouse_player_offset[1] * self.CAMERA_SENSITIVITY)
+
+    def toggle_spellcast_menu(self):
+        if self.player.ui_state == 0:
+            self.fade_alpha = 0
+            self.player.ui_state = 1
+            self.player.ui_substate = 0
+            self.make_spellcircle_items(self.player.get_castable_spells())
+        elif self.player.ui_state == 1:
+            self.player.ui_state = 0
+            self.player.ui_substate = 0
 
     def handle_input(self):
         while len(self.input_queue) != 0:
@@ -114,7 +131,20 @@ class Level():
                 else:
                     self.player.set_dx(0)
             elif event == ("LEFT CLICK", True):
-                self.player.cast_fire((self.mouse_x + self.camera_x, self.mouse_y + self.camera_y))
+                self.handle_leftclick()
+            elif event == ("SPELLCAST", True):
+                self.toggle_spellcast_menu()
+
+    def handle_leftclick(self):
+        if self.player.ui_state == 1:
+            if self.player.ui_substate == 0:
+                for i in range(0, len(self.spellcircle_items)):
+                    if globals.point_in_rect(self.mouse_x, self.mouse_y, self.spellcircle_items[i][2]):
+                        self.spellcircle_aim_index = i
+                        self.player.ui_substate = 1
+                        break
+            elif self.player.ui_substate == 1:
+                self.player.cast_spell(self.spellcircle_items[self.spellcircle_aim_index][0], (self.mouse_x + self.camera_x, self.mouse_y + self.camera_y))
 
     def update_enemies(self, delta):
         for enemy in self.map.rooms[self.map.current_room].enemies:
@@ -139,11 +169,39 @@ class Level():
             return
 
         self.handle_input()
-        self.player.update_position(delta)
-        self.check_collisions(delta)
-        self.check_exits()
-        self.update_enemies(delta)
-        self.update_camera()
+        if self.player.ui_state == 0:
+            self.player.update_position(delta)
+            self.check_collisions(delta)
+            self.check_exits()
+            self.update_enemies(delta)
+            self.update_camera()
+        elif self.player.ui_state == 1:
+            if self.fade_alpha < 100:
+                self.fade_alpha += 10 * delta
+                if self.fade_alpha > 100:
+                    self.fade_alpha = 100
+
+    def get_spellcircle_coords(self, degree):
+        y_offset = 285 * math.sin(math.radians(degree))
+        x_offset = 285 * math.cos(math.radians(degree)) * -1
+        if abs(x_offset) < 0.001:
+            x_offset = 0
+        if abs(y_offset) < 0.001:
+            y_offset = 0
+        return (self.SCREEN_CENTER[0] - 25 - x_offset, self.SCREEN_CENTER[1] - 25 - y_offset, 50, 50)
+
+    def make_spellcircle_items(self, castable_spells):
+        self.spellcircle_items = []
+        self.spellcircle_aim_index = -1
+        if len(castable_spells) == 0:
+            return
+        degree_padding = 360 / len(castable_spells)
+        for i in range(0, len(castable_spells)):
+            entry = []
+            entry.append(castable_spells[i][0])
+            entry.append(castable_spells[i][1])
+            entry.append(self.get_spellcircle_coords(90 + (i * degree_padding)))
+            self.spellcircle_items.append(entry)
 
     def render(self, window):
         for collider_rect in self.map.rooms[self.map.current_room].colliders:
@@ -160,3 +218,12 @@ class Level():
             window.fill_rect(window.YELLOW, self.offset_with_camera(self.player.get_charge_bar_rect()))
         for i in range(0, self.player.health):
             window.fill_rect(window.YELLOW, (10 + (i * 50), 10, 40, 40))
+
+        if self.player.ui_state == 1:
+            if self.player.ui_substate == 0:
+                window.fill_rect_transparent(window.BLACK, self.fade_alpha, (0, 0, 1280, 720))
+                if self.fade_alpha == 100:
+                    window.draw_circle(window.WHITE, self.SCREEN_CENTER, 320, 70)
+                    for item in self.spellcircle_items:
+                        window.fill_rect(window.RED, item[2])
+                        window.render_text(str(item[1]), (item[2][0] + 40, item[2][1] + 40), 20, window.BLUE)
