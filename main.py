@@ -47,4 +47,5 @@ def render(window, state_object):
 
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
+os.environ['SDL_VIDEODRIVER'] = 'x11'
 run()

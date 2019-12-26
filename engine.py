@@ -49,6 +49,7 @@ class Engine():
         # Init the font and image cache
         self.font_cache = {}
         self.text_cache = {}
+        self.image_cache = {}
 
         # Init pygame
         pygame.init()
@@ -57,6 +58,7 @@ class Engine():
             self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame_flags)
         else:
             self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame_flags | pygame.FULLSCREEN)
+        self.display = pygame.Surface((1280, 720))
         self.clock = pygame.time.Clock()
 
         # Init timing variables
@@ -78,7 +80,8 @@ class Engine():
             self.before_sec += self.SECOND
         self.before_time = pygame.time.get_ticks()
 
-        self.clock.tick(self.TARGET_FPS)
+        # self.clock.tick(self.TARGET_FPS)
+        self.clock.tick(0)
 
     """
     Rendering Functions
@@ -89,25 +92,27 @@ class Engine():
     """
 
     def clear_screen(self):
-        pygame.draw.rect(self.screen, self.BLACK, (0, 0, self.SCREEN_WIDTH, self.SCREEN_HEIGHT), False)
+        pygame.draw.rect(self.display, self.BLACK, (0, 0, self.SCREEN_WIDTH, self.SCREEN_HEIGHT), False)
 
     def flip_buffer(self):
-        pygame.display.flip()
+        self.screen.blit(self.display, (0, 0))
+        pygame.display.update()
         self.frames += 1
 
     def draw_rect(self, color, rect):
-        pygame.draw.rect(self.screen, color, rect, True)
+        pygame.draw.rect(self.display, color, rect, True)
 
     def fill_rect(self, color, rect):
-        pygame.draw.rect(self.screen, color, rect, False)
+        # pygame.draw.rect(self.screen, color, rect, False)
+        pygame.draw.rect(self.display, color, (int(rect[0]), int(rect[1]), rect[2], rect[3]))
 
     def fill_rect_transparent(self, color, alpha, rect):
         s = pygame.Surface((rect[2], rect[3]), pygame.SRCALPHA)
         s.fill((color[0], color[1], color[2], alpha))
-        self.screen.blit(s, (rect[0], rect[1]))
+        self.display.blit(s, (rect[0], rect[1]))
 
     def draw_circle(self, color, center, radius, width):
-        pygame.draw.circle(self.screen, color, center, radius, width)
+        pygame.draw.circle(self.display, color, center, radius, width)
 
     def render_text(self, text, pos, size=14, color=(255, 255, 255)):
         """
@@ -135,7 +140,37 @@ class Engine():
         else:
             draw_y = pos[1]
 
-        self.screen.blit(self.text_cache[text_id], (draw_x, draw_y))
+        self.display.blit(self.text_cache[text_id], (draw_x, draw_y))
+
+    def render_image(self, shortname, pos, alpha=False):
+        """
+        Renders an image to the screen
+        pos = (x, y) and if x and y = "CENTERED" then we center the image on that axis
+        """
+
+        # If the image for the passed string isn't in the cache, load it
+        if shortname not in self.image_cache:
+            if alpha:
+                self.image_cache[shortname] = pygame.image.load("res/" + shortname + ".png").convert_alpha()
+            else:
+                self.image_cache[shortname] = pygame.image.load("res/" + shortname + ".png").convert()
+
+        draw_x = 0
+        draw_y = 0
+
+        if pos[0] == "CENTERED":
+            draw_x = (self.SCREEN_WIDTH / 2) - (self.image_cache[shortname].get_rect().w / 2)
+        else:
+            draw_x = pos[0]
+        if pos[1] == "CENTERED":
+            draw_y = (self.SCREEN_HEIGHT / 2) - (self.image_cache[shortname].get_rect().h / 2)
+        else:
+            draw_y = pos[1]
+
+        draw_x = int(draw_x)
+        draw_y = int(draw_y)
+
+        self.display.blit(self.image_cache[shortname], (draw_x, draw_y))
 
     def render_fps(self):
         if self.show_fps:

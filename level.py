@@ -195,6 +195,10 @@ class Level():
 
     def render(self, window):
         for room in self.map.rooms:
+            for tile in room.floor_tiles:
+                tile_rect = self.offset_with_camera(tile)
+                if globals.rect_in_screen(tile_rect):
+                    window.render_image("floor", tile_rect)
             for collider in room.colliders:
                 collider_rect = self.offset_with_camera(collider)
                 if globals.rect_in_screen(collider_rect):
@@ -203,14 +207,14 @@ class Level():
             if enemy.attacking:
                 window.fill_rect(window.RED, self.offset_with_camera(enemy.get_rect()))
             else:
-                window.fill_rect(window.WHITE, self.offset_with_camera(enemy.get_rect()))
-        window.fill_rect(window.BLUE, self.offset_with_camera(self.player.get_rect()))
+                window.render_image("mummy", self.offset_with_camera(enemy.get_rect()), True)
+        window.render_image("player-idle", self.offset_with_camera(self.player.get_rect()), True)
         for spell in self.player.active_spells:
-            window.fill_rect(window.RED, self.offset_with_camera(spell.get_rect()))
+            window.render_image(spell.get_image(), self.offset_with_camera(spell.get_rect()), True)
         if self.player.get_charge_percent() > 0:
             window.fill_rect(window.YELLOW, self.offset_with_camera(self.player.get_charge_bar_rect()))
         for i in range(0, self.player.health):
-            window.fill_rect(window.YELLOW, (10 + (i * 50), 10, 40, 40))
+            window.render_image("heart", (10 + (i * 30), 10), True)
 
         if self.player.ui_state == 1:
             if self.player.ui_substate == 0:
@@ -218,5 +222,5 @@ class Level():
                 if self.fade_alpha == 100:
                     window.draw_circle(window.WHITE, self.SCREEN_CENTER, 320, 70)
                     for item in self.spellcircle_items:
-                        window.fill_rect(window.RED, item[2])
+                        window.render_image("spellbook-" + item[0], item[2])
                         window.render_text(str(item[1]), (item[2][0] + 40, item[2][1] + 40), 20, window.BLUE)

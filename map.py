@@ -19,6 +19,7 @@ class Room():
     def __init__(self, tag, x, y):
         self.colliders = []
         self.enemies = []
+        self.floor_tiles = []
         self.base_x = x
         self.base_y = y
         self.WIDTH = 0
@@ -30,6 +31,21 @@ class Room():
             self.generate_b()
         elif tag == "C":
             self.generate_c()
+
+        # Generate floor tiles now that we know the width
+        remaining_height = self.HEIGHT
+        tile_y = self.base_y
+        while remaining_height > 0:
+            tile_height = min(remaining_height, 80)
+            remaining_height -= tile_height
+            remaining_width = self.WIDTH
+            tile_x = self.base_x
+            while remaining_width > 0:
+                tile_width = min(remaining_width, 80)
+                remaining_width -= tile_width
+                self.floor_tiles.append((tile_x, tile_y, tile_width, tile_height))
+                tile_x += tile_width
+            tile_y += tile_height
 
     def get_rect(self):
         return (0, 0, self.WIDTH, self.HEIGHT)

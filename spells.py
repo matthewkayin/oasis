@@ -32,6 +32,12 @@ class Fire():
         else:
             return (self.x, self.y, self.WIDTH, self.HEIGHT)
 
+    def get_image(self):
+        if self.state == 0:
+            return "projectile-fire"
+        else:
+            return "explosion"
+
     def get_damage(self):
         if self.state == 0:
             return 0
